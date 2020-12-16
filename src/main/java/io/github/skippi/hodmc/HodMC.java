@@ -3,8 +3,15 @@
  */
 package io.github.skippi.hodmc;
 
-public class Library {
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class HodMC extends JavaPlugin {
     public boolean someLibraryMethod() {
         return true;
+    }
+
+    @Override
+    public void onEnable() {
+        System.out.println("hello world");
     }
 }

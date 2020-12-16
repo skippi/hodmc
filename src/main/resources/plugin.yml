@@ -1,0 +1,5 @@
+name: hodmc
+version: 0.0.1
+author: skippi
+main: io.github.skippi.hodmc.HodMC
+website: https://github.com/skippi/hodmc

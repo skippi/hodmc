@@ -18,7 +18,7 @@ import java.util.List;
 
 public class HodMC extends JavaPlugin {
     private Runnable ticker = this::tickDay;
-    private List<Wave> waves = Arrays.asList(new Wave(Arrays.asList("minecraft:zombie_horse"), 100));
+    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("minecraft:zombie_horse", 5).build());
     private int roundIndex = 0;
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();

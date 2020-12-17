@@ -8,6 +8,7 @@ import net.minecraft.server.v1_16_R3.EntityLiving;
 import net.minecraft.server.v1_16_R3.EntityTypes;
 import org.bukkit.*;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 
@@ -17,6 +18,7 @@ import java.util.List;
 public class HodMC extends JavaPlugin {
     private Runnable ticker = this::tickDay;
     private List<EntityLiving> wave = new ArrayList<>();
+    private long waveTime = 0;
 
     @Override
     public void onEnable() {
@@ -34,6 +36,7 @@ public class HodMC extends JavaPlugin {
             spawnLocation = world.getPlayers().get(0).getLocation();
         }
         if (world.getFullTime() >= 13000) {
+            waveTime = 0;
             world.setFullTime(18000);
             world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
             wave.clear();
@@ -48,12 +51,19 @@ public class HodMC extends JavaPlugin {
     }
 
     private void tickNight() {
+        World world = getServer().getWorld("world");
+        if (waveTime > 100) {
+            for (Player player : world.getPlayers()) {
+                player.damage(1);
+            }
+        }
         if (wave.stream().allMatch(e -> !e.isAlive())) {
+            waveTime = 0;
             wave.clear();
-            World world = getServer().getWorld("world");
             world.setFullTime(0);
             world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
             ticker = this::tickDay;
         }
+        waveTime += 1;
     }
 }

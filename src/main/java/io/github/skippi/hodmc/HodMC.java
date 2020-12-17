@@ -18,7 +18,8 @@ import java.util.List;
 
 public class HodMC extends JavaPlugin {
     private Runnable ticker = this::tickDay;
-    private Wave wave = new Wave(Arrays.asList("minecraft:zombie_horse"), 100);
+    private List<Wave> waves = Arrays.asList(new Wave(Arrays.asList("minecraft:zombie_horse"), 100));
+    private int roundIndex = 0;
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();
 
@@ -31,6 +32,9 @@ public class HodMC extends JavaPlugin {
     }
 
     private void tickDay() {
+        if (isVictory()) {
+            return;
+        }
         World world = getServer().getWorld("world");
         world.setFullTime(world.getFullTime() + 6);
         Location spawnLocation = world.getSpawnLocation();
@@ -42,7 +46,7 @@ public class HodMC extends JavaPlugin {
             world.setFullTime(18000);
             world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
             roundEntities.clear();
-            for (String id : wave.getUnits()) {
+            for (String id : getCurrentWave().getUnits()) {
                 roundEntities.add(genUnit(id, spawnLocation));
             }
             ticker = this::tickNight;
@@ -59,12 +63,13 @@ public class HodMC extends JavaPlugin {
 
     private void tickNight() {
         World world = getServer().getWorld("world");
-        if (roundTime > wave.getTimeLimit()) {
+        if (roundTime > getCurrentWave().getTimeLimit()) {
             for (Player player : world.getPlayers()) {
                 player.damage(1);
             }
         }
         if (roundEntities.stream().allMatch(e -> !e.isAlive())) {
+            roundIndex++;
             roundTime = 0;
             roundEntities.clear();
             world.setFullTime(0);
@@ -72,5 +77,13 @@ public class HodMC extends JavaPlugin {
             ticker = this::tickDay;
         }
         roundTime += 1;
+    }
+
+    private Wave getCurrentWave() {
+       return waves.get(roundIndex);
+    }
+
+    private boolean isVictory() {
+        return roundIndex >= waves.size();
     }
 }

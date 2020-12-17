@@ -13,12 +13,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class HodMC extends JavaPlugin {
     private Runnable ticker = this::tickDay;
-    private List<EntityLiving> wave = new ArrayList<>();
-    private long waveTime = 0;
+    private Wave wave = new Wave(Arrays.asList("minecraft:zombie_horse"), 100);
+    private long roundTime = 0;
+    private List<EntityLiving> roundEntities = new ArrayList<>();
 
     @Override
     public void onEnable() {
@@ -36,34 +38,39 @@ public class HodMC extends JavaPlugin {
             spawnLocation = world.getPlayers().get(0).getLocation();
         }
         if (world.getFullTime() >= 13000) {
-            waveTime = 0;
+            roundTime = 0;
             world.setFullTime(18000);
             world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-            wave.clear();
-            EntityLiving entity = new EntityHorseZombie(EntityTypes.ZOMBIE_HORSE, ((CraftWorld)world).getHandle());
-            entity.setPosition(spawnLocation.getX(), spawnLocation.getY(), spawnLocation.getZ());
-            wave.add(entity);
-            for (EntityLiving e : wave) {
-                ((CraftWorld) world).getHandle().addEntity(e);
+            roundEntities.clear();
+            for (String id : wave.getUnits()) {
+                roundEntities.add(genUnit(id, spawnLocation));
             }
             ticker = this::tickNight;
         }
     }
 
+    private EntityLiving genUnit(String id, Location loc) {
+        CraftWorld world = (CraftWorld) loc.getWorld();
+        EntityLiving entity = new EntityHorseZombie(EntityTypes.ZOMBIE_HORSE, world.getHandle());
+        entity.setPosition(loc.getX(), loc.getY(), loc.getZ());
+        world.getHandle().addEntity(entity);
+        return entity;
+    }
+
     private void tickNight() {
         World world = getServer().getWorld("world");
-        if (waveTime > 100) {
+        if (roundTime > wave.getTimeLimit()) {
             for (Player player : world.getPlayers()) {
                 player.damage(1);
             }
         }
-        if (wave.stream().allMatch(e -> !e.isAlive())) {
-            waveTime = 0;
-            wave.clear();
+        if (roundEntities.stream().allMatch(e -> !e.isAlive())) {
+            roundTime = 0;
+            roundEntities.clear();
             world.setFullTime(0);
             world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
             ticker = this::tickDay;
         }
-        waveTime += 1;
+        roundTime += 1;
     }
 }

@@ -6,10 +6,11 @@ repositories {
     jcenter()
     maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    mavenLocal()
 }
 
 dependencies {
-    api 'org.spigotmc:spigot-api:1.16.4-R0.1-SNAPSHOT'
+    api 'org.spigotmc:spigot:1.16.4-R0.1-SNAPSHOT'
     api 'com.google.guava:guava:21.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'

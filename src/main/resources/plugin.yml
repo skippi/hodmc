@@ -3,3 +3,7 @@ version: 0.0.1
 author: skippi
 main: io.github.skippi.hodmc.HodMC
 website: https://github.com/skippi/hodmc
+commands:
+  hod:
+    description: hodmc porcelain command
+    usage: /<command> [subcommand]

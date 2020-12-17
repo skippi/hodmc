@@ -3,15 +3,32 @@
  */
 package io.github.skippi.hodmc;
 
+import org.bukkit.*;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 
 public class HodMC extends JavaPlugin {
-    public boolean someLibraryMethod() {
-        return true;
-    }
+    private Runnable ticker = this::tickDay;
 
     @Override
     public void onEnable() {
-        System.out.println("hello world");
+        World world = getServer().getWorld("world");
+        world.setFullTime(0);
+        BukkitScheduler scheduler = getServer().getScheduler();
+        scheduler.scheduleSyncRepeatingTask(this, () ->  ticker.run(), 0, 1);
+    }
+
+    private void tickDay() {
+        World world = getServer().getWorld("world");
+        world.setFullTime(world.getFullTime() + 6);
+        if (world.getFullTime() >= 13000) {
+            ticker = this::tickNight;
+        }
+    }
+
+    private void tickNight() {
+        World world = getServer().getWorld("world");
+        world.setFullTime(18000);
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
     }
 }

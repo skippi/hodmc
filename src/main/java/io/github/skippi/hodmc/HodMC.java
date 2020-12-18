@@ -53,6 +53,7 @@ public class HodMC extends JavaPlugin {
                 .withSeparator()
                 .withLine("Phase: " + ChatColor.AQUA + "Night")
                 .withLine("Time: " + ChatColor.AQUA + format.format(new Date(roundTime / 20 * 1000)))
+                .withLine("Remaining: " + ChatColor.AQUA + roundEntities.stream().filter(e -> e.isAlive()).count())
                 .build();
         return board.toScoreboard();
     }

@@ -1,7 +1,7 @@
 package io.github.skippi.hodmc;
 
-import net.minecraft.server.v1_16_R3.EntityLiving;
-
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Wave {
@@ -23,5 +23,21 @@ public class Wave {
 
     public List<String> getUnits() {
         return units;
+    }
+
+    public static class WaveBuilder {
+        private List<String> units = new ArrayList<>();
+        private long timeLimit = 1200;
+
+        private WaveBuilder() {}
+
+        public  WaveBuilder withUnitGroup(String unitId, int count) {
+            units.addAll(Collections.nCopies(count, unitId));
+            return this;
+        }
+
+        public Wave build() {
+            return new Wave(units, timeLimit);
+        }
     }
 }

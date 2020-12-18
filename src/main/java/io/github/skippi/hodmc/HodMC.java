@@ -37,20 +37,40 @@ public class HodMC extends JavaPlugin {
         }
         World world = getServer().getWorld("world");
         world.setFullTime(world.getFullTime() + 6);
+        if (world.getFullTime() >= 13000) {
+            ticker = this::tickDayNight;
+        }
+    }
+
+    private void tickDayNight() {
+        World world = getServer().getWorld("world");
+        if (world.getFullTime() < 18000) {
+            world.setFullTime(world.getFullTime() + 100);
+            return;
+        }
         Location spawnLocation = world.getSpawnLocation();
         if (!world.getPlayers().isEmpty()) {
             spawnLocation = world.getPlayers().get(0).getLocation();
         }
-        if (world.getFullTime() >= 13000) {
-            roundTime = 0;
-            world.setFullTime(18000);
-            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-            roundEntities.clear();
-            for (String id : getCurrentWave().getUnits()) {
-                roundEntities.add(genUnit(id, spawnLocation));
-            }
-            ticker = this::tickNight;
+        roundTime = 0;
+        world.setFullTime(18000);
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+        roundEntities.clear();
+        for (String id : getCurrentWave().getUnits()) {
+            roundEntities.add(genUnit(id, spawnLocation));
         }
+        ticker = this::tickNight;
+    }
+
+    private void tickNightDay() {
+        World world = getServer().getWorld("world");
+        if (world.getFullTime() < 24000 && world.getFullTime() >= 13000) {
+            world.setFullTime(world.getFullTime() + 200);
+            return;
+        }
+        world.setFullTime(0);
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+        ticker = this::tickDay;
     }
 
     private EntityLiving genUnit(String id, Location loc) {
@@ -72,9 +92,7 @@ public class HodMC extends JavaPlugin {
             roundIndex++;
             roundTime = 0;
             roundEntities.clear();
-            world.setFullTime(0);
-            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
-            ticker = this::tickDay;
+            ticker = this::tickNightDay;
         }
         roundTime += 1;
     }

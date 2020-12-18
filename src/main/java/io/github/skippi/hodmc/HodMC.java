@@ -6,16 +6,20 @@ package io.github.skippi.hodmc;
 import net.minecraft.server.v1_16_R3.EntityHorseZombie;
 import net.minecraft.server.v1_16_R3.EntityLiving;
 import net.minecraft.server.v1_16_R3.EntityTypes;
-import org.bukkit.GameRule;
-import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Score;
+import org.bukkit.scoreboard.Scoreboard;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 public class HodMC extends JavaPlugin {
@@ -30,13 +34,38 @@ public class HodMC extends JavaPlugin {
         World world = getServer().getWorld("world");
         world.setFullTime(0);
         BukkitScheduler scheduler = getServer().getScheduler();
-        scheduler.scheduleSyncRepeatingTask(this, () ->  ticker.run(), 0, 1);
+        scheduler.scheduleSyncRepeatingTask(this, () -> ticker.run(), 0, 1);
+    }
+
+    private Scoreboard makeDayScoreboard() {
+        World world = getServer().getWorld("world");
+        Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective obj = board.registerNewObjective("game", "dummy", "HoD Survival");
+        obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+        SimpleDateFormat format = new SimpleDateFormat("mm:ss");
+        obj.getScore("-------------").setScore(3);
+        obj.getScore("Phase: " + ChatColor.AQUA + "Day").setScore(2);
+        obj.getScore("Time: " + ChatColor.AQUA + format.format(new Date((long) (Math.ceil((13000 - world.getFullTime()) / 140.0) * 1000)))).setScore(1);
+        return board;
+    }
+
+    private Scoreboard makeNightScoreboard() {
+        Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective obj = board.registerNewObjective("game", "dummy", "HoD Survival");
+        obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+        SimpleDateFormat format = new SimpleDateFormat("mm:ss");
+        obj.getScore("-------------").setScore(3);
+        obj.getScore("Phase: " + ChatColor.AQUA + "Night").setScore(2);
+        obj.getScore("Time: " + ChatColor.AQUA + format.format(new Date(roundTime / 20 * 1000))).setScore(1);
+        return board;
     }
 
     private void tickDay() {
         if (isVictory()) {
             return;
         }
+        Scoreboard board = makeDayScoreboard();
+        Bukkit.getOnlinePlayers().forEach(p -> p.setScoreboard(board));
         World world = getServer().getWorld("world");
         world.getPlayers().forEach(this::addDaytimeEffects);
         world.setFullTime(world.getFullTime() + 6);
@@ -64,7 +93,7 @@ public class HodMC extends JavaPlugin {
         if (!world.getPlayers().isEmpty()) {
             spawnLocation = world.getPlayers().get(0).getLocation();
         }
-        roundTime = 0;
+        roundTime = getCurrentWave().getTimeLimit();
         world.setFullTime(18000);
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
         roundEntities.clear();
@@ -95,7 +124,9 @@ public class HodMC extends JavaPlugin {
 
     private void tickNight() {
         World world = getServer().getWorld("world");
-        if (roundTime > getCurrentWave().getTimeLimit()) {
+        Scoreboard board = makeNightScoreboard();
+        Bukkit.getOnlinePlayers().forEach(p -> p.setScoreboard(board));
+        if (roundTime <= 0) {
             for (Player player : world.getPlayers()) {
                 player.damage(1);
             }
@@ -106,7 +137,7 @@ public class HodMC extends JavaPlugin {
             roundEntities.clear();
             ticker = this::tickNightDay;
         }
-        roundTime += 1;
+        roundTime = Math.max(0, roundTime - 1);
     }
 
     private Wave getCurrentWave() {

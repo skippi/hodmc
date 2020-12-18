@@ -11,9 +11,6 @@ import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 
 import java.text.SimpleDateFormat;
@@ -39,25 +36,25 @@ public class HodMC extends JavaPlugin {
 
     private Scoreboard makeDayScoreboard() {
         World world = getServer().getWorld("world");
-        Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective obj = board.registerNewObjective("game", "dummy", "HoD Survival");
-        obj.setDisplaySlot(DisplaySlot.SIDEBAR);
         SimpleDateFormat format = new SimpleDateFormat("mm:ss");
-        obj.getScore("-------------").setScore(3);
-        obj.getScore("Phase: " + ChatColor.AQUA + "Day").setScore(2);
-        obj.getScore("Time: " + ChatColor.AQUA + format.format(new Date((long) (Math.ceil((13000 - world.getFullTime()) / 140.0) * 1000)))).setScore(1);
-        return board;
+        StatBoard board = StatBoard.builder()
+                .withTitle("HoD Survival")
+                .withSeparator()
+                .withLine("Phase: " + ChatColor.AQUA + "Day")
+                .withLine("Time: " + ChatColor.AQUA + format.format(new Date((long) (Math.ceil((13000 - world.getFullTime()) / 140.0) * 1000))))
+                .build();
+        return board.toScoreboard();
     }
 
     private Scoreboard makeNightScoreboard() {
-        Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective obj = board.registerNewObjective("game", "dummy", "HoD Survival");
-        obj.setDisplaySlot(DisplaySlot.SIDEBAR);
         SimpleDateFormat format = new SimpleDateFormat("mm:ss");
-        obj.getScore("-------------").setScore(3);
-        obj.getScore("Phase: " + ChatColor.AQUA + "Night").setScore(2);
-        obj.getScore("Time: " + ChatColor.AQUA + format.format(new Date(roundTime / 20 * 1000))).setScore(1);
-        return board;
+        StatBoard board = StatBoard.builder()
+                .withTitle("HoD Survival")
+                .withSeparator()
+                .withLine("Phase: " + ChatColor.AQUA + "Night")
+                .withLine("Time: " + ChatColor.AQUA + format.format(new Date(roundTime / 20 * 1000)))
+                .build();
+        return board.toScoreboard();
     }
 
     private void tickDay() {

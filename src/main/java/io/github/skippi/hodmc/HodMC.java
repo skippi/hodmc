@@ -10,6 +10,8 @@ import org.bukkit.*;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import java.util.ArrayList;
@@ -36,10 +38,20 @@ public class HodMC extends JavaPlugin {
             return;
         }
         World world = getServer().getWorld("world");
+        world.getPlayers().forEach(this::addDaytimeEffects);
         world.setFullTime(world.getFullTime() + 6);
         if (world.getFullTime() >= 13000) {
+            world.getPlayers().forEach(this::removeDaytimeEffects);
             ticker = this::tickDayNight;
         }
+    }
+
+    private void addDaytimeEffects(Player player) {
+        player.setWalkSpeed(0.5f);
+    }
+
+    private void removeDaytimeEffects(Player player) {
+        player.setWalkSpeed(0.2f);
     }
 
     private void tickDayNight() {

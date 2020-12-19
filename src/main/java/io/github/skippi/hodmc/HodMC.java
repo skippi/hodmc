@@ -74,6 +74,16 @@ public class HodMC extends JavaPlugin implements Listener {
         return new ShopkeeperBuilder()
                 .withTraderName("" + ChatColor.BOLD + ChatColor.DARK_PURPLE + "Shopkeeper")
                 .withTrade(new ItemStack(Material.GOLD_NUGGET), new ItemStack(Material.DIAMOND))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.STRING, 3))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 2), new ItemStack(Material.COW_SPAWN_EGG))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 2), new ItemStack(Material.PIG_SPAWN_EGG))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 2), new ItemStack(Material.SHEEP_SPAWN_EGG))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.CARROT, 4))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.WHEAT, 3))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.BONE_MEAL, 5))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.BEETROOT_SEEDS, 4))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.MELON_SEEDS, 6))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.WHEAT_SEEDS, 2))
                 .build(loc);
     }
 
@@ -88,6 +98,11 @@ public class HodMC extends JavaPlugin implements Listener {
             block.getLocation().getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.IRON_INGOT));
             block.setType(Material.BEDROCK, true);
             event.setCancelled(true);
+        } else if (block.getType().toString().toLowerCase().contains("ore")) {
+            oreTimes.put(block.getLocation(), OreRenewInfo.make(0, block.getType()));
+            block.breakNaturally(event.getPlayer().getInventory().getItemInMainHand());
+            block.setType(Material.BEDROCK, true);
+            event.setCancelled(true);
         }
     }
 
@@ -99,8 +114,8 @@ public class HodMC extends JavaPlugin implements Listener {
             return;
         oreCooldowns.putIfAbsent(event.getPlayer().getUniqueId(), 0);
         if (oreCooldowns.get(event.getPlayer().getUniqueId()) > 0) return;
-        if (event.getClickedBlock().getType() == Material.IRON_ORE) {
-            event.getClickedBlock().getWorld().dropItemNaturally(event.getClickedBlock().getLocation(), new ItemStack(Material.IRON_ORE));
+        if (event.getClickedBlock().getType().toString().toLowerCase().contains("ore")) {
+            event.getClickedBlock().getWorld().dropItemNaturally(event.getClickedBlock().getLocation(), new ItemStack(event.getClickedBlock().getType()));
             event.getClickedBlock().setType(Material.AIR);
             event.getPlayer().swingMainHand();
             oreCooldowns.put(event.getPlayer().getUniqueId(), 8);

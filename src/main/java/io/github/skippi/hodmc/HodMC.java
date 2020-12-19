@@ -8,6 +8,9 @@ import net.minecraft.server.v1_16_R3.EntityLiving;
 import net.minecraft.server.v1_16_R3.EntityTypes;
 import org.bukkit.*;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
+import org.bukkit.entity.Creature;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -21,7 +24,7 @@ import java.util.List;
 
 public class HodMC extends JavaPlugin {
     private Runnable ticker = this::tickDay;
-    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("minecraft:zombie_horse", 5).build());
+    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("zergling", 20).withUnitGroup("ultralisk", 5).build());
     private int roundIndex = 0;
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();
@@ -53,7 +56,7 @@ public class HodMC extends JavaPlugin {
                 .withSeparator()
                 .withLine("Phase: " + ChatColor.AQUA + "Night")
                 .withLine("Time: " + ChatColor.AQUA + format.format(new Date(roundTime / 20 * 1000)))
-                .withLine("Remaining: " + ChatColor.AQUA + roundEntities.stream().filter(e -> e.isAlive()).count())
+                .withLine("Remaining: " + ChatColor.AQUA + roundEntities.stream().filter(EntityLiving::isAlive).count())
                 .build();
         return board.toScoreboard();
     }
@@ -113,8 +116,13 @@ public class HodMC extends JavaPlugin {
     }
 
     private EntityLiving genUnit(String id, Location loc) {
+        EntityLiving entity = null;
         CraftWorld world = (CraftWorld) loc.getWorld();
-        EntityLiving entity = new EntityHorseZombie(EntityTypes.ZOMBIE_HORSE, world.getHandle());
+        if (id.equals("zergling")) {
+            entity = new Zergling(world.getHandle());
+        } else {
+            entity = new Ultralisk(world.getHandle());
+        }
         entity.setPosition(loc.getX(), loc.getY(), loc.getZ());
         world.getHandle().addEntity(entity);
         return entity;
@@ -127,6 +135,13 @@ public class HodMC extends JavaPlugin {
         if (roundTime <= 0) {
             for (Player player : world.getPlayers()) {
                 player.damage(1);
+            }
+        }
+        for (Player player : world.getPlayers()) {
+            for (Entity e : player.getNearbyEntities(512, 256, 512)) {
+                if (!(e instanceof Creature)) continue;
+                Creature creature = (Creature) e;
+                creature.setTarget(player);
             }
         }
         if (roundEntities.stream().allMatch(e -> !e.isAlive())) {

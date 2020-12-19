@@ -1,6 +1,7 @@
 package io.github.skippi.hodmc;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -24,9 +25,8 @@ public class StatBoard {
 
     public Scoreboard toScoreboard() {
         Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective obj = board.registerNewObjective("game", "dummy", "");
+        Objective obj = board.registerNewObjective("game", "dummy", title);
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-        obj.getScore(title).setScore(lines.size());
         for (int i = 0; i < lines.size(); ++i) {
             obj.getScore(lines.get(i)).setScore(lines.size() - 1 - i);
         }

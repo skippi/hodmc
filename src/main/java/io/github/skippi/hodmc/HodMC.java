@@ -2,10 +2,13 @@ package io.github.skippi.hodmc;
 
 import net.minecraft.server.v1_16_R3.EntityLiving;
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.libs.org.apache.commons.lang3.tuple.Pair;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
@@ -14,10 +17,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scoreboard.Scoreboard;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class HodMC extends JavaPlugin implements Listener {
     private Runnable ticker = this::tickDay;
@@ -25,6 +25,19 @@ public class HodMC extends JavaPlugin implements Listener {
     private int roundIndex = 0;
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();
+    private Map<Location, OreRenewInfo> oreTimes = new HashMap<>();
+
+    private static class OreRenewInfo {
+        public int time = 0;
+        public Material material = Material.AIR;
+
+        public static OreRenewInfo make(int time, Material material) {
+            OreRenewInfo result = new OreRenewInfo();
+            result.time = time;
+            result.material = material;
+            return result;
+        }
+    }
 
     @Override
     public void onEnable() {
@@ -49,6 +62,7 @@ public class HodMC extends JavaPlugin implements Listener {
         makeShopkeeper(world.getSpawnLocation());
         BukkitScheduler scheduler = getServer().getScheduler();
         scheduler.scheduleSyncRepeatingTask(this, () -> ticker.run(), 0, 1);
+        scheduler.scheduleSyncRepeatingTask(this, this::tickOreRenew, 0, 1);
         PluginManager pluginManager = getServer().getPluginManager();
         pluginManager.registerEvents(this, this);
     }
@@ -58,6 +72,32 @@ public class HodMC extends JavaPlugin implements Listener {
                 .withTraderName("" + ChatColor.BOLD + ChatColor.DARK_PURPLE + "Shopkeeper")
                 .withTrade(new ItemStack(Material.GOLD_NUGGET), new ItemStack(Material.DIAMOND))
                 .build(loc);
+    }
+
+    @EventHandler
+    private void triggerOreRenew(BlockBreakEvent event) {
+        if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
+            return;
+        }
+        Block block = event.getBlock();
+        if (block.getType() == Material.IRON_ORE) {
+            oreTimes.put(block.getLocation(), OreRenewInfo.make(0, block.getType()));
+            block.getLocation().getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.IRON_INGOT));
+            block.setType(Material.BEDROCK, true);
+            event.setCancelled(true);
+        }
+    }
+
+    private void tickOreRenew() {
+        Iterator<Map.Entry<Location, OreRenewInfo>> iter = oreTimes.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<Location, OreRenewInfo> entry = iter.next();
+            entry.getValue().time += 1;
+            if (entry.getValue().time > 200) {
+                iter.remove();
+                entry.getKey().getBlock().setType(entry.getValue().material);
+            }
+        }
     }
 
     @EventHandler

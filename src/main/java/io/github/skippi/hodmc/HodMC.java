@@ -33,6 +33,12 @@ public class HodMC extends JavaPlugin {
     public void onEnable() {
         World world = getServer().getWorld("world");
         world.setFullTime(0);
+        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+        world.setGameRule(GameRule.KEEP_INVENTORY, true);
+        world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
+        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+        WorldBorder border = world.getWorldBorder();
+        border.setSize(150.0);
         BukkitScheduler scheduler = getServer().getScheduler();
         scheduler.scheduleSyncRepeatingTask(this, () -> ticker.run(), 0, 1);
     }

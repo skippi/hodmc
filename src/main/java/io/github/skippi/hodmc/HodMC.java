@@ -42,6 +42,10 @@ public class HodMC extends JavaPlugin implements Listener {
                 world.setChunkForceLoaded(x, z, true);
             }
         }
+        for (Entity entity : world.getEntities()) {
+            if (entity instanceof Player) continue;
+            entity.remove();
+        }
         makeShopkeeper(world.getSpawnLocation());
         BukkitScheduler scheduler = getServer().getScheduler();
         scheduler.scheduleSyncRepeatingTask(this, () -> ticker.run(), 0, 1);

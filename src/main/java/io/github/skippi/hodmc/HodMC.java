@@ -8,7 +8,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -51,19 +50,10 @@ public class HodMC extends JavaPlugin implements Listener {
     }
 
     private Villager makeShopkeeper(Location loc) {
-        Villager villager = (Villager) loc.getWorld().spawnEntity(loc, EntityType.VILLAGER);
-        villager.setVillagerType(Villager.Type.PLAINS);
-        villager.setProfession(Villager.Profession.ARMORER);
-        villager.setVillagerExperience(30); // need experience or job change
-        villager.setCustomName("" + ChatColor.BOLD + ChatColor.DARK_PURPLE + "Shopkeeper");
-        villager.setAI(false);
-        villager.setInvulnerable(true);
-        MerchantRecipe recipe = new MerchantRecipe(new ItemStack(Material.DIAMOND), Integer.MAX_VALUE);
-        recipe.addIngredient(new ItemStack(Material.GOLD_NUGGET));
-        List<MerchantRecipe> recipes = new ArrayList<>();
-        recipes.add(recipe);
-        villager.setRecipes(recipes);
-        return villager;
+        return new ShopkeeperBuilder()
+                .withTraderName("" + ChatColor.BOLD + ChatColor.DARK_PURPLE + "Shopkeeper")
+                .withTrade(new ItemStack(Material.GOLD_NUGGET), new ItemStack(Material.DIAMOND))
+                .build(loc);
     }
 
     @EventHandler

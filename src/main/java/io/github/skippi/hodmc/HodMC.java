@@ -3,13 +3,15 @@ package io.github.skippi.hodmc;
 import net.minecraft.server.v1_16_R3.EntityLiving;
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.libs.org.apache.commons.lang3.tuple.Pair;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -26,6 +28,7 @@ public class HodMC extends JavaPlugin implements Listener {
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();
     private Map<Location, OreRenewInfo> oreTimes = new HashMap<>();
+    private Map<UUID, Integer> oreCooldowns = new HashMap<>();
 
     private static class OreRenewInfo {
         public int time = 0;
@@ -88,7 +91,26 @@ public class HodMC extends JavaPlugin implements Listener {
         }
     }
 
+    @EventHandler
+    private void pickupOre(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        if (!event.getPlayer().getInventory().getItemInMainHand().getType().toString().toLowerCase().contains("pickaxe"))
+            return;
+        oreCooldowns.putIfAbsent(event.getPlayer().getUniqueId(), 0);
+        if (oreCooldowns.get(event.getPlayer().getUniqueId()) > 0) return;
+        if (event.getClickedBlock().getType() == Material.IRON_ORE) {
+            event.getClickedBlock().getWorld().dropItemNaturally(event.getClickedBlock().getLocation(), new ItemStack(Material.IRON_ORE));
+            event.getClickedBlock().setType(Material.AIR);
+            event.getPlayer().swingMainHand();
+            oreCooldowns.put(event.getPlayer().getUniqueId(), 8);
+        }
+    }
+
     private void tickOreRenew() {
+        for (Map.Entry<UUID, Integer> entry : oreCooldowns.entrySet()) {
+            entry.setValue(Math.max(0, entry.getValue() - 1));
+        }
         Iterator<Map.Entry<Location, OreRenewInfo>> iter = oreTimes.entrySet().iterator();
         while (iter.hasNext()) {
             Map.Entry<Location, OreRenewInfo> entry = iter.next();

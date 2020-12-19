@@ -31,11 +31,10 @@ public class ShopkeeperBuilder {
 
     public Villager build(Location loc) {
         Villager villager = (Villager) loc.getWorld().spawnEntity(loc, EntityType.VILLAGER);
-//        villager.setAI(false);
         villager.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0.0);
         villager.setInvulnerable(true);
         villager.setProfession(Villager.Profession.ARMORER);
-        villager.setVillagerExperience(30); // need experience or job change
+        villager.setVillagerLevel(5);
         villager.setVillagerType(Villager.Type.PLAINS);
         villager.setCustomName(traderName);
         villager.setCustomNameVisible(true);

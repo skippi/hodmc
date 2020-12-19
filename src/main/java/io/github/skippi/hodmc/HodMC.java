@@ -73,6 +73,14 @@ public class HodMC extends JavaPlugin implements Listener {
     private Villager makeShopkeeper(Location loc) {
         return new ShopkeeperBuilder()
                 .withTraderName("" + ChatColor.BOLD + ChatColor.DARK_PURPLE + "Shopkeeper")
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 2), new ItemStack(Material.DIRT, 64))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 4), new ItemStack(Material.COBBLESTONE, 64))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 8), new ItemStack(Material.OBSIDIAN, 16))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 6), new ItemStack(Material.NETHERRACK, 16))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 6), new ItemStack(Material.SOUL_SAND, 16))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 4), new ItemStack(Material.LAVA_BUCKET, 1))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 4), new ItemStack(Material.WATER_BUCKET, 1))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 2), new ItemStack(Material.FLINT_AND_STEEL, 1))
                 .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.COAL, 10))
                 .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.IRON_INGOT, 1))
                 .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.REDSTONE, 10))
@@ -92,6 +100,7 @@ public class HodMC extends JavaPlugin implements Listener {
                 .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.BEETROOT_SEEDS, 4))
                 .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.MELON_SEEDS, 6))
                 .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.WHEAT_SEEDS, 2))
+                .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.OAK_SAPLING, 5))
                 .build(loc);
     }
 

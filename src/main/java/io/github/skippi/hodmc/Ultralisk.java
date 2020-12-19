@@ -10,6 +10,7 @@ public class Ultralisk extends EntityRavager {
         setCustomName(new ChatComponentText("" + ChatColor.RED + ChatColor.BOLD + "ULTRALISK!!!"));
         setCustomNameVisible(true);
         setHealth(50.0f);
+        setPersistent();
         getAttributeInstance(GenericAttributes.MOVEMENT_SPEED).setValue(0.3); // 0.23
     }
 }

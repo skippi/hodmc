@@ -9,7 +9,7 @@ public class Zergling extends EntityZombie {
         super(EntityTypes.ZOMBIE, world);
         setCustomName(new ChatComponentText("" + ChatColor.RED + ChatColor.BOLD + "ZERGLING!!!"));
         setCustomNameVisible(true);
-        setGoalTarget(world.getPlayers().get(0));
+        setPersistent();
         getAttributeInstance(GenericAttributes.MOVEMENT_SPEED).setValue(0.4); // 0.23
     }
 }

@@ -6,6 +6,7 @@ import net.minecraft.server.v1_16_R3.EntityLiving;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -13,6 +14,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -113,6 +115,18 @@ public class HodMC extends JavaPlugin implements Listener {
                 .withTrade(new ItemStack(Material.GOLD_NUGGET, 1), new ItemStack(Material.OAK_SAPLING, 5))
                 .build(loc);
     }
+
+    @EventHandler
+    private void enchantTools(CraftItemEvent event) {
+        ItemStack stack = event.getCurrentItem();
+        if (stack.getType().toString().toLowerCase().contains("pickaxe")) {
+            stack.addEnchantment(Enchantment.DIG_SPEED, 3);
+        } else if (stack.getType().toString().toLowerCase().contains("shovel")) {
+            stack.addEnchantment(Enchantment.DIG_SPEED, 5);
+        } else if (stack.getType().toString().toLowerCase().contains("axe")) {
+            stack.addEnchantment(Enchantment.DIG_SPEED, 4);
+        }
+}
 
     @EventHandler
     private void triggerOreRenew(BlockBreakEvent event) {

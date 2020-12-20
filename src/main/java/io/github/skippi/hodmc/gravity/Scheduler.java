@@ -13,7 +13,6 @@ public class Scheduler {
     public void tick() {
         double weight = 0.0;
         while (!queue.isEmpty() && weight < 1.0) {
-            System.out.println(queue.size());
             Action action = queue.remove();
             action.call(this);
             weight += action.getWeight();

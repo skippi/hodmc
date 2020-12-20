@@ -30,8 +30,6 @@ public class UpdateStressAction implements Action {
         if (newStress >= 7) {
             scheduler.schedule(new FallAction(loc));
         }
-        System.out.println(getStress(loc));
-        System.out.println(newStress);
         if (getStress(loc) != newStress) {
             setStress(loc, newStress);
             scheduler.schedule(new UpdateNeighborStressAction(loc));

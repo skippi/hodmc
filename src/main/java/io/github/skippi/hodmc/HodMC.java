@@ -1,5 +1,7 @@
 package io.github.skippi.hodmc;
 
+import io.github.skippi.hodmc.gravity.Scheduler;
+import io.github.skippi.hodmc.gravity.UpdateStressAction;
 import net.minecraft.server.v1_16_R3.EntityLiving;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -9,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -29,6 +32,7 @@ public class HodMC extends JavaPlugin implements Listener {
     private List<EntityLiving> roundEntities = new ArrayList<>();
     private Map<Location, OreRenewInfo> oreTimes = new HashMap<>();
     private Map<UUID, Integer> oreCooldowns = new HashMap<>();
+    private Scheduler physicsScheduler = new Scheduler();
 
     private static class OreRenewInfo {
         public int time = 0;
@@ -66,8 +70,14 @@ public class HodMC extends JavaPlugin implements Listener {
         BukkitScheduler scheduler = getServer().getScheduler();
         scheduler.scheduleSyncRepeatingTask(this, () -> ticker.run(), 0, 1);
         scheduler.scheduleSyncRepeatingTask(this, this::tickOreRenew, 0, 1);
+        scheduler.scheduleSyncRepeatingTask(this, () -> physicsScheduler.tick(), 0, 1);
         PluginManager pluginManager = getServer().getPluginManager();
         pluginManager.registerEvents(this, this);
+    }
+
+    @EventHandler
+    private void gravityPhysics(BlockPhysicsEvent event) {
+        physicsScheduler.schedule(new UpdateStressAction(event.getBlock().getLocation()));
     }
 
     private Villager makeShopkeeper(Location loc) {

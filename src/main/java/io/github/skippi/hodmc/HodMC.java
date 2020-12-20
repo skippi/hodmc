@@ -1,11 +1,14 @@
 package io.github.skippi.hodmc;
 
+import io.github.skippi.hodmc.gravity.FallAction;
 import io.github.skippi.hodmc.gravity.Scheduler;
 import io.github.skippi.hodmc.gravity.UpdateStressAction;
 import net.minecraft.server.v1_16_R3.EntityLiving;
 import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_16_R3.entity.CraftSkeleton;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -14,6 +17,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -28,7 +32,7 @@ import java.util.*;
 
 public class HodMC extends JavaPlugin implements Listener {
     private Runnable ticker = this::tickDay;
-    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("zergling", 20).withUnitGroup("ultralisk", 5).build());
+    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("hydralisk", 5).build());
     private int roundIndex = 0;
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();
@@ -126,7 +130,24 @@ public class HodMC extends JavaPlugin implements Listener {
         } else if (stack.getType().toString().toLowerCase().contains("axe")) {
             stack.addEnchantment(Enchantment.DIG_SPEED, 4);
         }
-}
+    }
+
+    private Skeleton makeHydralisk(Location loc) {
+        Skeleton mob = (Skeleton) loc.getWorld().spawnEntity(loc, EntityType.SKELETON);
+        mob.setCustomName("" + ChatColor.RED + ChatColor.BOLD + "HYDRALISK!!!");
+        mob.setCustomNameVisible(true);
+        mob.setArrowCooldown(20);
+        mob.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(10);
+        mob.setHealth(10);
+        return mob;
+    }
+
+    @EventHandler
+    private void hydraliskCorrosion(ProjectileHitEvent event) {
+        if (!(event.getEntity().getShooter() instanceof Skeleton)) return;
+        event.getHitBlock().setType(Material.AIR);
+        event.getEntity().remove();
+    }
 
     @EventHandler
     private void triggerOreRenew(BlockBreakEvent event) {
@@ -268,8 +289,10 @@ public class HodMC extends JavaPlugin implements Listener {
         CraftWorld world = (CraftWorld) loc.getWorld();
         if (id.equals("zergling")) {
             entity = new Zergling(world.getHandle());
-        } else {
+        } else if (id.equals("ultralisk")) {
             entity = new Ultralisk(world.getHandle());
+        } else {
+            entity = ((CraftSkeleton) makeHydralisk(loc)).getHandle();
         }
         entity.setPosition(loc.getX(), loc.getY(), loc.getZ());
         world.getHandle().addEntity(entity);

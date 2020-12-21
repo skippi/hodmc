@@ -1,13 +1,16 @@
 package io.github.skippi.hodmc;
 
-import io.github.skippi.hodmc.gravity.FallAction;
 import io.github.skippi.hodmc.gravity.Scheduler;
 import io.github.skippi.hodmc.gravity.UpdateStressAction;
+import net.minecraft.server.v1_16_R3.BlockPosition;
 import net.minecraft.server.v1_16_R3.EntityLiving;
+import net.minecraft.server.v1_16_R3.PacketPlayOutBlockBreakAnimation;
+import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_16_R3.entity.CraftSkeleton;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
@@ -39,6 +42,8 @@ public class HodMC extends JavaPlugin implements Listener {
     private Map<Location, OreRenewInfo> oreTimes = new HashMap<>();
     private Map<UUID, Integer> oreCooldowns = new HashMap<>();
     private Scheduler physicsScheduler = new Scheduler();
+    private Map<Block, Integer> durabilityMap = new HashMap<>();
+    private Map<Block, Integer> breakIdMap = new HashMap<>();
 
     private static class OreRenewInfo {
         public int time = 0;
@@ -50,6 +55,49 @@ public class HodMC extends JavaPlugin implements Listener {
             result.material = material;
             return result;
         }
+    }
+
+    @EventHandler
+    private void resetBlockDamage(BlockBreakEvent event) {
+        durabilityMap.remove(event.getBlock());
+        animateBlockBreak(event.getBlock(), 10);
+    }
+
+    private void animateBlockBreak(Block block, int stage) {
+        int id = breakIdMap.computeIfAbsent(block, k -> RandomUtils.nextInt());
+        PacketPlayOutBlockBreakAnimation packet = new PacketPlayOutBlockBreakAnimation(id, new BlockPosition(block.getX(), block.getY(), block.getZ()), stage);
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet);
+        }
+        if (stage == 10) {
+            breakIdMap.remove(block);
+        }
+    }
+
+    private void damageBlock(Block block, int amount) {
+        if (block.isEmpty()) return;
+        int durability = durabilityMap.getOrDefault(block, 8); // TODO: 8 durability
+        int newDurability = durability - amount;
+        if (newDurability <= 0) {
+            block.setType(Material.AIR);
+            animateBlockBreak(block, 10);
+            durabilityMap.remove(block);
+            return;
+        } else {
+            durabilityMap.put(block, newDurability);
+        }
+        if (newDurability < 8) {
+            animateBlockBreak(block, 8 - newDurability);
+        }
+//        if (newDurability <= 4) { // half value
+//            ArmorStand label = (ArmorStand) block.getWorld().spawnEntity(block.getLocation().clone().add(0.5, 0, 0.5), EntityType.ARMOR_STAND);
+//            label.setCustomName("" + ChatColor.BOLD + ChatColor.LIGHT_PURPLE + "-");
+//            label.setCustomNameVisible(true);
+//            label.setVisible(false);
+//            label.setMarker(true);
+//            label.setSmall(true);
+//            Bukkit.getScheduler().scheduleSyncDelayedTask(this, label::remove, 100);
+//        }
     }
 
     @Override
@@ -145,7 +193,7 @@ public class HodMC extends JavaPlugin implements Listener {
     @EventHandler
     private void hydraliskCorrosion(ProjectileHitEvent event) {
         if (!(event.getEntity().getShooter() instanceof Skeleton)) return;
-        event.getHitBlock().setType(Material.AIR);
+        damageBlock(event.getHitBlock(), 2);
         event.getEntity().remove();
     }
 

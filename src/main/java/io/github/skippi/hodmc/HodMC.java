@@ -19,6 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
@@ -36,7 +37,7 @@ import java.util.*;
 
 public class HodMC extends JavaPlugin implements Listener {
     private Runnable ticker = this::tickDay;
-    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("hydralisk", 5).build());
+    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("ultralisk", 1).build());
     private int roundIndex = 0;
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();
@@ -175,16 +176,6 @@ public class HodMC extends JavaPlugin implements Listener {
         }
     }
 
-    private Skeleton makeHydralisk(Location loc) {
-        Skeleton mob = (Skeleton) loc.getWorld().spawnEntity(loc, EntityType.SKELETON);
-        mob.setCustomName("" + ChatColor.RED + ChatColor.BOLD + "HYDRALISK!!!");
-        mob.setCustomNameVisible(true);
-        mob.setArrowCooldown(20);
-        mob.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(10);
-        mob.setHealth(10);
-        return mob;
-    }
-
     @EventHandler
     private void hammerAction(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
@@ -201,6 +192,20 @@ public class HodMC extends JavaPlugin implements Listener {
         meta.setDisplayName("Hammer");
         stack.setItemMeta(meta);
         return stack;
+    }
+
+    @EventHandler
+    private void arrowSkip(EntityDamageByEntityEvent event) {
+        if (!(event.getEntity() instanceof Skeleton)) return;
+        if (!(event.getDamager() instanceof Arrow)) return;
+        Arrow arrow = (Arrow) event.getDamager();
+        if (!(arrow.getShooter() instanceof Skeleton)) return;
+        arrow.remove();
+        event.setCancelled(true);
+        Location newLoc = arrow.getLocation().clone().add(arrow.getVelocity().clone().normalize().multiply(1.5));
+        Arrow newArrow = (Arrow) event.getEntity().getWorld().spawnEntity(newLoc, EntityType.ARROW);
+        newArrow.setShooter(arrow.getShooter());
+        newArrow.setVelocity(arrow.getVelocity());
     }
 
     private boolean isHammer(ItemStack stack) {
@@ -358,7 +363,7 @@ public class HodMC extends JavaPlugin implements Listener {
         } else if (id.equals("ultralisk")) {
             entity = new Ultralisk(world.getHandle());
         } else {
-            entity = ((CraftSkeleton) makeHydralisk(loc)).getHandle();
+            entity = new Hydralisk(world.getHandle());
         }
         entity.setPosition(loc.getX(), loc.getY(), loc.getZ());
         world.getHandle().addEntity(entity);

@@ -25,6 +25,7 @@ import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -89,15 +90,6 @@ public class HodMC extends JavaPlugin implements Listener {
         if (newDurability < 8) {
             animateBlockBreak(block, 8 - newDurability);
         }
-//        if (newDurability <= 4) { // half value
-//            ArmorStand label = (ArmorStand) block.getWorld().spawnEntity(block.getLocation().clone().add(0.5, 0, 0.5), EntityType.ARMOR_STAND);
-//            label.setCustomName("" + ChatColor.BOLD + ChatColor.LIGHT_PURPLE + "-");
-//            label.setCustomNameVisible(true);
-//            label.setVisible(false);
-//            label.setMarker(true);
-//            label.setSmall(true);
-//            Bukkit.getScheduler().scheduleSyncDelayedTask(this, label::remove, 100);
-//        }
     }
 
     @Override
@@ -119,6 +111,9 @@ public class HodMC extends JavaPlugin implements Listener {
         for (Entity entity : world.getEntities()) {
             if (entity instanceof Player) continue;
             entity.remove();
+        }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.getInventory().addItem(makeHammer());
         }
         makeShopkeeper(world.getSpawnLocation());
         BukkitScheduler scheduler = getServer().getScheduler();
@@ -188,6 +183,29 @@ public class HodMC extends JavaPlugin implements Listener {
         mob.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(10);
         mob.setHealth(10);
         return mob;
+    }
+
+    @EventHandler
+    private void hammerAction(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        ItemStack item = event.getPlayer().getInventory().getItemInMainHand();
+        if (!isHammer(item)) return;
+        durabilityMap.remove(event.getClickedBlock());
+        animateBlockBreak(event.getClickedBlock(), 10);
+    }
+
+    private ItemStack makeHammer() {
+        ItemStack stack = new ItemStack(Material.STICK);
+        ItemMeta meta = stack.getItemMeta();
+        meta.setDisplayName("Hammer");
+        stack.setItemMeta(meta);
+        return stack;
+    }
+
+    private boolean isHammer(ItemStack stack) {
+        return stack.getItemMeta().getDisplayName().equals("Hammer")
+                && stack.getType() == Material.STICK;
     }
 
     @EventHandler

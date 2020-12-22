@@ -44,6 +44,7 @@ public class UpdateStressAction implements Action {
         float result = getStress(below);
         Location[] neighbors = { loc.clone().add(1, 0, 0), loc.clone().add(-1, 0, 0), loc.clone().add(0, 0, 1), loc.clone().add(0, 0, -1) };
         for (Location n : neighbors) {
+            if (!isBaseable(n.getBlock())) continue;
             result = Math.min(result, getStress(n) + getStressWeight(n.getBlock().getType()));
         }
         return result;
@@ -71,6 +72,11 @@ public class UpdateStressAction implements Action {
     private void setStress(Location loc, float value) {
         if (!isStressAware(loc)) return;
         stressMap.put(loc, value);
+    }
+
+    private boolean isBaseable(Block block) {
+        Material mat = block.getType();
+        return (!block.isEmpty() && !block.isLiquid() && mat != Material.GRASS);
     }
 
     private boolean isStressAware(Location loc) {

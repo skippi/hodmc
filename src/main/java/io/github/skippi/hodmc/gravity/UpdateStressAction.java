@@ -9,7 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UpdateStressAction implements Action {
-    private Location loc;
+    private final Location loc;
+
+    private static final Map<Location, Float> stressMap = new HashMap<>();
 
     public UpdateStressAction(Location loc) {
         this.loc = loc;
@@ -26,8 +28,8 @@ public class UpdateStressAction implements Action {
         }
         World world = loc.getWorld();
         if (!world.getWorldBorder().isInside(loc)) return;
-        int newStress = getNewStress(loc);
-        if (newStress >= 7) {
+        float newStress = getNewStress(loc);
+        if (newStress >= 1.0) {
             scheduler.schedule(new FallAction(loc));
         }
         if (getStress(loc) != newStress) {
@@ -36,30 +38,37 @@ public class UpdateStressAction implements Action {
         }
     }
 
-    private int getNewStress(Location loc) {
-        if (!isStressAware(loc)) return 0;
+    private float getNewStress(Location loc) {
+        if (!isStressAware(loc)) return 0f;
         Location below = loc.clone().add(0, -1, 0);
-        int result = getStress(below);
-        Location neighbors[] = { loc.clone().add(1, 0, 0), loc.clone().add(-1, 0, 0), loc.clone().add(0, 0, 1), loc.clone().add(0, 0, -1) };
+        float result = getStress(below);
+        Location[] neighbors = { loc.clone().add(1, 0, 0), loc.clone().add(-1, 0, 0), loc.clone().add(0, 0, 1), loc.clone().add(0, 0, -1) };
         for (Location n : neighbors) {
-            result = Math.min(result, getStress(n) + 1);
+            result = Math.min(result, getStress(n) + getStressWeight(n.getBlock().getType()));
         }
         return result;
     }
 
-    public static Map<Location, Integer> stressMap = new HashMap<>();
+    private float getStressWeight(Material mat) {
+        float weight = 1.0f / (mat.getHardness() + mat.getBlastResistance());
+        return clamp(weight, 1 / 12f, 1f);
+    }
 
-    private int getStress(Location loc) {
+    private float clamp(float value, float min, float max) {
+        return Math.max(Math.min(value, max), min);
+    }
+
+    private float getStress(Location loc) {
         if (isStressAware(loc)) {
-            return stressMap.getOrDefault(loc, 0);
+            return stressMap.getOrDefault(loc, 0f);
         } else if (isPermanentlyStable(loc)) {
-            return 0;
+            return 0.0f;
         } else {
-            return 64;
+            return 1.0f;
         }
     }
 
-    private void setStress(Location loc, int value) {
+    private void setStress(Location loc, float value) {
         if (!isStressAware(loc)) return;
         stressMap.put(loc, value);
     }

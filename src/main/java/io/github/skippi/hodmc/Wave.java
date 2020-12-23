@@ -8,13 +8,10 @@ public class Wave {
     private List<String> units;
     private long timeLimit;
 
+    private Wave() {}
+
     public static WaveBuilder builder() {
         return new WaveBuilder();
-    }
-
-    public Wave(List<String> units, long timeLimit) {
-        this.timeLimit = timeLimit;
-        this.units = units;
     }
 
     public long getTimeLimit() {
@@ -26,18 +23,20 @@ public class Wave {
     }
 
     public static class WaveBuilder {
-        private List<String> units = new ArrayList<>();
-        private long timeLimit = 1200;
+        private final List<String> units = new ArrayList<>();
 
         private WaveBuilder() {}
 
-        public  WaveBuilder withUnitGroup(String unitId, int count) {
+        public WaveBuilder withUnitGroup(String unitId, int count) {
             units.addAll(Collections.nCopies(count, unitId));
             return this;
         }
 
         public Wave build() {
-            return new Wave(units, timeLimit);
+            Wave wave = new Wave();
+            wave.units = units;
+            wave.timeLimit = 1200;
+            return wave;
         }
     }
 }

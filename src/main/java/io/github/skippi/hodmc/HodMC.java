@@ -38,6 +38,7 @@ public class HodMC extends JavaPlugin implements Listener {
     private Scheduler physicsScheduler = new Scheduler();
     private Map<Block, Integer> durabilityMap = new HashMap<>();
     private final BlockBreakAnimator breakAnimator = BlockBreakAnimator.make();
+    private final BlockDamageResolver blockDamageResolver = BlockDamageResolver.make();
 
     private static class OreRenewInfo {
         public int time = 0;
@@ -59,18 +60,12 @@ public class HodMC extends JavaPlugin implements Listener {
 
     private void damageBlock(Block block, int amount) {
         if (block.isEmpty()) return;
-        int durability = durabilityMap.getOrDefault(block, 8); // TODO: 8 durability
-        int newDurability = durability - amount;
-        if (newDurability <= 0) {
-            block.setType(Material.AIR);
-            breakAnimator.reset(block);
-            durabilityMap.remove(block);
-            return;
+        blockDamageResolver.damage(block, 1 / 8f);
+        float health = blockDamageResolver.getHealth(block);
+        if (health > 0) {
+            breakAnimator.animate(block, (int)((1.0f - health) * 10));
         } else {
-            durabilityMap.put(block, newDurability);
-        }
-        if (newDurability < 8) {
-            breakAnimator.animate(block, 8 - newDurability);
+            breakAnimator.reset(block);
         }
     }
 
@@ -163,7 +158,7 @@ public class HodMC extends JavaPlugin implements Listener {
         if (event.getHand() != EquipmentSlot.HAND) return;
         ItemStack item = event.getPlayer().getInventory().getItemInMainHand();
         if (!Hammer.isHammer(item)) return;
-        durabilityMap.remove(event.getClickedBlock());
+        blockDamageResolver.reset(event.getClickedBlock());
         breakAnimator.reset(event.getClickedBlock());
     }
 
@@ -184,7 +179,9 @@ public class HodMC extends JavaPlugin implements Listener {
     @EventHandler
     private void hydraliskCorrosion(ProjectileHitEvent event) {
         if (!(event.getEntity().getShooter() instanceof Skeleton)) return;
-        damageBlock(event.getHitBlock(), 2);
+        Block block = event.getHitBlock();
+        if (block == null) return;
+        damageBlock(block,2);
         event.getEntity().remove();
     }
 

@@ -2,16 +2,11 @@ package io.github.skippi.hodmc;
 
 import io.github.skippi.hodmc.gravity.Scheduler;
 import io.github.skippi.hodmc.gravity.UpdateStressAction;
-import net.minecraft.server.v1_16_R3.BlockPosition;
 import net.minecraft.server.v1_16_R3.EntityLiving;
-import net.minecraft.server.v1_16_R3.PacketPlayOutBlockBreakAnimation;
-import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_16_R3.entity.CraftSkeleton;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -24,19 +19,17 @@ import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.util.Vector;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class HodMC extends JavaPlugin implements Listener {
     private Runnable ticker = this::tickDay;
-    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("ultralisk", 1).build());
+    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("hydralisk", 50).build());
     private int roundIndex = 0;
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();
@@ -44,7 +37,7 @@ public class HodMC extends JavaPlugin implements Listener {
     private Map<UUID, Integer> oreCooldowns = new HashMap<>();
     private Scheduler physicsScheduler = new Scheduler();
     private Map<Block, Integer> durabilityMap = new HashMap<>();
-    private Map<Block, Integer> breakIdMap = new HashMap<>();
+    private final BlockBreakAnimator breakAnimator = BlockBreakAnimator.make();
 
     private static class OreRenewInfo {
         public int time = 0;
@@ -61,18 +54,7 @@ public class HodMC extends JavaPlugin implements Listener {
     @EventHandler
     private void resetBlockDamage(BlockBreakEvent event) {
         durabilityMap.remove(event.getBlock());
-        animateBlockBreak(event.getBlock(), 10);
-    }
-
-    private void animateBlockBreak(Block block, int stage) {
-        int id = breakIdMap.computeIfAbsent(block, k -> RandomUtils.nextInt());
-        PacketPlayOutBlockBreakAnimation packet = new PacketPlayOutBlockBreakAnimation(id, new BlockPosition(block.getX(), block.getY(), block.getZ()), stage);
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet);
-        }
-        if (stage == 10) {
-            breakIdMap.remove(block);
-        }
+        breakAnimator.reset(event.getBlock());
     }
 
     private void damageBlock(Block block, int amount) {
@@ -81,14 +63,14 @@ public class HodMC extends JavaPlugin implements Listener {
         int newDurability = durability - amount;
         if (newDurability <= 0) {
             block.setType(Material.AIR);
-            animateBlockBreak(block, 10);
+            breakAnimator.reset(block);
             durabilityMap.remove(block);
             return;
         } else {
             durabilityMap.put(block, newDurability);
         }
         if (newDurability < 8) {
-            animateBlockBreak(block, 8 - newDurability);
+            breakAnimator.animate(block, 8 - newDurability);
         }
     }
 
@@ -182,7 +164,7 @@ public class HodMC extends JavaPlugin implements Listener {
         ItemStack item = event.getPlayer().getInventory().getItemInMainHand();
         if (!Hammer.isHammer(item)) return;
         durabilityMap.remove(event.getClickedBlock());
-        animateBlockBreak(event.getClickedBlock(), 10);
+        breakAnimator.reset(event.getClickedBlock());
     }
 
     @EventHandler

@@ -165,11 +165,11 @@ public class HodMC extends JavaPlugin implements Listener {
     @EventHandler
     private void enchantTools(CraftItemEvent event) {
         ItemStack stack = event.getCurrentItem();
-        if (stack.getType().toString().toLowerCase().contains("pickaxe")) {
+        if (MaterialUtil.isPickaxe(stack.getType())) {
             stack.addEnchantment(Enchantment.DIG_SPEED, 3);
-        } else if (stack.getType().toString().toLowerCase().contains("shovel")) {
+        } else if (MaterialUtil.isShovel(stack.getType())) {
             stack.addEnchantment(Enchantment.DIG_SPEED, 5);
-        } else if (stack.getType().toString().toLowerCase().contains("axe")) {
+        } else if (MaterialUtil.isAxe(stack.getType())) {
             stack.addEnchantment(Enchantment.DIG_SPEED, 4);
         }
     }
@@ -253,13 +253,14 @@ public class HodMC extends JavaPlugin implements Listener {
     private void pickupOre(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (event.getHand() != EquipmentSlot.HAND) return;
-        if (!event.getPlayer().getInventory().getItemInMainHand().getType().toString().toLowerCase().contains("pickaxe"))
+        if (!MaterialUtil.isPickaxe(event.getPlayer().getInventory().getItemInMainHand().getType()))
             return;
         oreCooldowns.putIfAbsent(event.getPlayer().getUniqueId(), 0);
         if (oreCooldowns.get(event.getPlayer().getUniqueId()) > 0) return;
-        if (event.getClickedBlock().getType().toString().toLowerCase().contains("ore")) {
-            event.getClickedBlock().getWorld().dropItemNaturally(event.getClickedBlock().getLocation(), new ItemStack(event.getClickedBlock().getType()));
-            event.getClickedBlock().setType(Material.AIR);
+        Block block = event.getClickedBlock();
+        if (MaterialUtil.isOre(block.getType())) {
+            block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(block.getType()));
+            block.setType(Material.AIR);
             event.getPlayer().swingMainHand();
             oreCooldowns.put(event.getPlayer().getUniqueId(), 8);
         }

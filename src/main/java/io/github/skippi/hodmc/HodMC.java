@@ -19,9 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -221,6 +219,18 @@ public class HodMC extends JavaPlugin implements Listener {
     }
 
     @EventHandler
+    private void spectateOnDeath(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player)) return;
+        Player player = (Player) event.getEntity();
+        World world = player.getWorld();
+        if (world.getFullTime() != 18000) return;
+        if ((player.getHealth() - event.getFinalDamage()) > 0) return;
+        event.setCancelled(true);
+        player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+        player.setGameMode(GameMode.SPECTATOR);
+    }
+
+    @EventHandler
     private void triggerOreRenew(BlockBreakEvent event) {
         if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
             return;
@@ -349,6 +359,11 @@ public class HodMC extends JavaPlugin implements Listener {
         if (world.getFullTime() < 24000 && world.getFullTime() >= 13000) {
             world.setFullTime(world.getFullTime() + 200);
             return;
+        }
+        for (Player player : world.getPlayers()) {
+            if (player.getGameMode() == GameMode.SPECTATOR) {
+                player.setGameMode(GameMode.SURVIVAL);
+            }
         }
         world.setFullTime(0);
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);

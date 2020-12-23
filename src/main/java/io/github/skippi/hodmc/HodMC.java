@@ -29,6 +29,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.util.Vector;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -112,7 +113,7 @@ public class HodMC extends JavaPlugin implements Listener {
             entity.remove();
         }
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.getInventory().addItem(makeHammer());
+            player.getInventory().addItem(Hammer.make());
         }
         makeShopkeeper(world.getSpawnLocation());
         BukkitScheduler scheduler = getServer().getScheduler();
@@ -179,17 +180,9 @@ public class HodMC extends JavaPlugin implements Listener {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (event.getHand() != EquipmentSlot.HAND) return;
         ItemStack item = event.getPlayer().getInventory().getItemInMainHand();
-        if (!isHammer(item)) return;
+        if (!Hammer.isHammer(item)) return;
         durabilityMap.remove(event.getClickedBlock());
         animateBlockBreak(event.getClickedBlock(), 10);
-    }
-
-    private ItemStack makeHammer() {
-        ItemStack stack = new ItemStack(Material.STICK);
-        ItemMeta meta = stack.getItemMeta();
-        meta.setDisplayName("Hammer");
-        stack.setItemMeta(meta);
-        return stack;
     }
 
     @EventHandler
@@ -204,11 +197,6 @@ public class HodMC extends JavaPlugin implements Listener {
         Arrow newArrow = (Arrow) event.getEntity().getWorld().spawnEntity(newLoc, EntityType.ARROW);
         newArrow.setShooter(arrow.getShooter());
         newArrow.setVelocity(arrow.getVelocity());
-    }
-
-    private boolean isHammer(ItemStack stack) {
-        return stack.getItemMeta().getDisplayName().equals("Hammer")
-                && stack.getType() == Material.STICK;
     }
 
     @EventHandler

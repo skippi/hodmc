@@ -29,7 +29,7 @@ import java.util.*;
 
 public class HodMC extends JavaPlugin implements Listener {
     private Runnable ticker = this::tickDay;
-    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("hydralisk", 50).build());
+    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("zergling", 50).build());
     private int roundIndex = 0;
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();
@@ -342,18 +342,6 @@ public class HodMC extends JavaPlugin implements Listener {
         World world = getServer().getWorld("world");
         Scoreboard board = makeNightScoreboard();
         Bukkit.getOnlinePlayers().forEach(p -> p.setScoreboard(board));
-        if (roundTime <= 0) {
-            for (Player player : world.getPlayers()) {
-                player.damage(1);
-            }
-        }
-        for (Player player : world.getPlayers()) {
-            for (Entity e : player.getNearbyEntities(512, 256, 512)) {
-                if (!(e instanceof Creature)) continue;
-                Creature creature = (Creature) e;
-                creature.setTarget(player);
-            }
-        }
         if (roundEntities.stream().allMatch(e -> !e.isAlive())) {
             roundIndex++;
             roundTime = 0;

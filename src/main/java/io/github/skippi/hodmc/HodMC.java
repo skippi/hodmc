@@ -1,8 +1,10 @@
 package io.github.skippi.hodmc;
 
 import io.github.skippi.hodmc.gravity.Scheduler;
+import io.github.skippi.hodmc.gravity.UpdateNeighborStressAction;
 import io.github.skippi.hodmc.gravity.UpdateStressAction;
 import net.minecraft.server.v1_16_R3.EntityLiving;
+import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
@@ -36,7 +38,7 @@ public class HodMC extends JavaPlugin implements Listener {
     private Map<Location, OreRenewInfo> oreTimes = new HashMap<>();
     private Map<UUID, Integer> oreCooldowns = new HashMap<>();
     private Scheduler physicsScheduler = new Scheduler();
-    private final BlockHealthSystem BHS = new BlockHealthSystem();
+    public static final BlockHealthSystem BHS = new BlockHealthSystem();
 
     private static class OreRenewInfo {
         public int time = 0;
@@ -59,6 +61,7 @@ public class HodMC extends JavaPlugin implements Listener {
     public void onEnable() {
         World world = getServer().getWorld("world");
         world.setFullTime(0);
+        world.setGameRule(GameRule.MAX_ENTITY_CRAMMING, 0);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.KEEP_INVENTORY, true);
         world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
@@ -89,6 +92,7 @@ public class HodMC extends JavaPlugin implements Listener {
 
     @EventHandler
     private void gravityPhysics(BlockPhysicsEvent event) {
+        physicsScheduler.schedule(new UpdateNeighborStressAction(event.getBlock().getLocation()));
         physicsScheduler.schedule(new UpdateStressAction(event.getBlock().getLocation()));
     }
 
@@ -293,16 +297,14 @@ public class HodMC extends JavaPlugin implements Listener {
             world.setFullTime(world.getFullTime() + 100);
             return;
         }
-        Location spawnLocation = world.getSpawnLocation();
-        if (!world.getPlayers().isEmpty()) {
-            spawnLocation = world.getPlayers().get(0).getLocation();
-        }
         roundTime = getCurrentWave().getTimeLimit();
         world.setFullTime(18000);
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
         roundEntities.clear();
         for (String id : getCurrentWave().getUnits()) {
-            roundEntities.add(genUnit(id, spawnLocation));
+            int x = RandomUtils.nextBoolean() ? -85 : 85;
+            int z = (int)(RandomUtils.nextFloat() * 170) - 85;
+            roundEntities.add(genUnit(id, world.getHighestBlockAt(x, z).getLocation().add(0, 1, 0)));
         }
         ticker = this::tickNight;
     }

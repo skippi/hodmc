@@ -1,17 +1,21 @@
 package io.github.skippi.hodmc;
 
 import net.minecraft.server.v1_16_R3.*;
+import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.v1_16_R3.entity.CraftLivingEntity;
 import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityTargetEvent;
 
-import java.util.EnumSet;
 import java.util.Optional;
 
 public class Zergling extends EntityZombie {
+    private int chaseTime = 0;
+
     public Zergling(World world) {
         super(EntityTypes.ZOMBIE, world);
         setCustomName(new ChatComponentText("" + ChatColor.RED + ChatColor.BOLD + "ZERGLING!!!"));
@@ -20,13 +24,29 @@ public class Zergling extends EntityZombie {
         setPersistent();
         getAttributeInstance(GenericAttributes.MAX_HEALTH).setValue(5);
         getAttributeInstance(GenericAttributes.FOLLOW_RANGE).setValue(2048);
-        getAttributeInstance(GenericAttributes.MOVEMENT_SPEED).setValue(0.3); // 0.23
         setHealth(5);
     }
 
     @Override
+    protected NavigationAbstract b(World world) {
+        return new NavigationSpider(this, world);
+    }
+
+    @Override
+    public boolean isClimbing() {
+        return positionChanged; // horizontalCollision
+    }
+
+    @Override
+    public boolean damageEntity(DamageSource damagesource, float f) {
+        chaseTime = Math.max(0, chaseTime - 60);
+        return super.damageEntity0(damagesource, f);
+    }
+
+    @Override
     protected void initPathfinder() {
-        goalSelector.a(2, new PathfinderGoalZombieAttack(this, 1.0D, false));
+        goalSelector.a(0, new DigGoal(this));
+        goalSelector.a(1, new ZerglingAttackGoal(this, 1.5));
         targetSelector.a(2, new KillEveryoneGoal(this));
     }
 
@@ -48,29 +68,46 @@ public class Zergling extends EntityZombie {
         }
     }
 
+    public static class ZerglingAttackGoal extends PathfinderGoalZombieAttack {
+        private Zergling zergling;
+
+        public ZerglingAttackGoal(Zergling zergling, double speed) {
+            super(zergling, speed, false);
+            this.zergling = zergling;
+        }
+
+        @Override
+        protected void g() {
+            super.g();
+            zergling.chaseTime = 0;
+        }
+    }
+
     public static class DigGoal extends PathfinderGoal {
-        public DigGoal() {
-            a(EnumSet.of(Type.MOVE, Type.LOOK)); // setControls
+        private Zergling zergling;
+        private int limit;
+
+        public DigGoal(Zergling zergling) {
+            this.zergling = zergling;
+            this.limit = 300 + (int)(RandomUtils.nextFloat() * 80);
         }
 
         @Override
         public boolean a() { // canStart
-            return true;
+            zergling.chaseTime++;
+            return zergling.chaseTime > limit;
         }
 
         @Override
-        public boolean C_() { // canStop
-            return true;
+        public void d() { // stop
         }
 
         @Override
-        public void d() {
-            System.out.println("stop");
-        }
-
-        @Override
-        public void e() {
-            System.out.println("tick");
+        public void e() { // tick
+            CraftLivingEntity ce = (CraftLivingEntity) zergling.getBukkitEntity();
+            Block block = ce.getTargetBlock(null, 5);
+            HodMC.BHS.damage(block, 1.5f);
+            zergling.chaseTime = limit - 40 - (int)(RandomUtils.nextFloat() * 60);
         }
     }
 }

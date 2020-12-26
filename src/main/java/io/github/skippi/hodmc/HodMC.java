@@ -181,18 +181,15 @@ public class HodMC extends JavaPlugin implements Listener {
 
     @EventHandler
     private void triggerOreRenew(BlockBreakEvent event) {
-        if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
+        Player player = event.getPlayer();
+        if (player.getGameMode() == GameMode.CREATIVE) {
             return;
         }
         Block block = event.getBlock();
-        if (block.getType() == Material.IRON_ORE) {
+        if (MaterialUtil.isOre(block.getType())) {
+            Collection<ItemStack> drops = block.getDrops(player.getInventory().getItemInMainHand(), event.getPlayer());
             BRS.activate(block, 100);
-            block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.IRON_INGOT));
-            event.setCancelled(true);
-        } else if (block.getType().toString().toLowerCase().contains("ore")) {
-            Collection<ItemStack> drops = block.getDrops(event.getPlayer().getInventory().getItemInMainHand(), event.getPlayer());
-            BRS.activate(block, 100);
-            drops.forEach(d -> block.getWorld().dropItemNaturally(block.getLocation(), d));
+            drops.stream().map(ItemUtil::smelt).forEach(d -> block.getWorld().dropItemNaturally(player.getLocation(), d));
             event.setCancelled(true);
         }
     }

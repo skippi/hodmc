@@ -30,7 +30,7 @@ public class UpdateStressAction implements Action {
         if (!world.getWorldBorder().isInside(loc)) return;
         float newStress = getNewStress(loc);
         if (newStress >= 1.0) {
-            scheduler.schedule(new FallAction(loc));
+            scheduler.schedule(new FallAction(loc.getBlock()));
         }
         if (getStress(loc) != newStress) {
             setStress(loc, newStress);

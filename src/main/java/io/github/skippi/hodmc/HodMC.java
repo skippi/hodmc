@@ -4,6 +4,7 @@ import io.github.skippi.hodmc.gravity.Scheduler;
 import io.github.skippi.hodmc.gravity.StressSystem;
 import io.github.skippi.hodmc.gravity.UpdateNeighborStressAction;
 import io.github.skippi.hodmc.gravity.UpdateStressAction;
+import io.github.skippi.hodmc.system.BlockRenewSystem;
 import net.minecraft.server.v1_16_R3.EntityLiving;
 import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.*;
@@ -36,23 +37,11 @@ public class HodMC extends JavaPlugin implements Listener {
     private int roundIndex = 0;
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();
-    private Map<Location, OreRenewInfo> oreTimes = new HashMap<>();
     private Map<UUID, Integer> oreCooldowns = new HashMap<>();
     private Scheduler physicsScheduler = new Scheduler();
     public static final BlockHealthSystem BHS = new BlockHealthSystem();
     public static final StressSystem SS = new StressSystem();
-
-    private static class OreRenewInfo {
-        public int time = 0;
-        public Material material = Material.AIR;
-
-        public static OreRenewInfo make(int time, Material material) {
-            OreRenewInfo result = new OreRenewInfo();
-            result.time = time;
-            result.material = material;
-            return result;
-        }
-    }
+    public static final BlockRenewSystem BRS = new BlockRenewSystem();
 
     @EventHandler
     private void resetBlockDamage(BlockBreakEvent event) {
@@ -88,6 +77,7 @@ public class HodMC extends JavaPlugin implements Listener {
         scheduler.scheduleSyncRepeatingTask(this, () -> ticker.run(), 0, 1);
         scheduler.scheduleSyncRepeatingTask(this, this::tickOreRenew, 0, 1);
         scheduler.scheduleSyncRepeatingTask(this, () -> physicsScheduler.tick(), 0, 1);
+        scheduler.scheduleSyncRepeatingTask(this, BRS::tick, 0, 1);
         PluginManager pluginManager = getServer().getPluginManager();
         pluginManager.registerEvents(this, this);
     }
@@ -196,14 +186,13 @@ public class HodMC extends JavaPlugin implements Listener {
         }
         Block block = event.getBlock();
         if (block.getType() == Material.IRON_ORE) {
-            oreTimes.put(block.getLocation(), OreRenewInfo.make(0, block.getType()));
-            block.getLocation().getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.IRON_INGOT));
-            block.setType(Material.BEDROCK, true);
+            BRS.activate(block, 100);
+            block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.IRON_INGOT));
             event.setCancelled(true);
         } else if (block.getType().toString().toLowerCase().contains("ore")) {
-            oreTimes.put(block.getLocation(), OreRenewInfo.make(0, block.getType()));
-            block.breakNaturally(event.getPlayer().getInventory().getItemInMainHand());
-            block.setType(Material.BEDROCK, true);
+            Collection<ItemStack> drops = block.getDrops(event.getPlayer().getInventory().getItemInMainHand(), event.getPlayer());
+            BRS.activate(block, 100);
+            drops.forEach(d -> block.getWorld().dropItemNaturally(block.getLocation(), d));
             event.setCancelled(true);
         }
     }
@@ -228,15 +217,6 @@ public class HodMC extends JavaPlugin implements Listener {
     private void tickOreRenew() {
         for (Map.Entry<UUID, Integer> entry : oreCooldowns.entrySet()) {
             entry.setValue(Math.max(0, entry.getValue() - 1));
-        }
-        Iterator<Map.Entry<Location, OreRenewInfo>> iter = oreTimes.entrySet().iterator();
-        while (iter.hasNext()) {
-            Map.Entry<Location, OreRenewInfo> entry = iter.next();
-            entry.getValue().time += 1;
-            if (entry.getValue().time > 200) {
-                iter.remove();
-                entry.getKey().getBlock().setType(entry.getValue().material);
-            }
         }
     }
 

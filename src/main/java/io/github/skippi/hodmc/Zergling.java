@@ -1,6 +1,5 @@
 package io.github.skippi.hodmc;
 
-import io.github.skippi.hodmc.gravity.UpdateStressAction;
 import net.minecraft.server.v1_16_R3.*;
 import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.Bukkit;
@@ -145,7 +144,7 @@ public class Zergling extends EntityZombie {
             Block block = target.getLocation().getBlock();
             while (block.getY() > height && limit > 0) {
                 limit--;
-                float stress = UpdateStressAction.getStress(block.getLocation());
+                float stress = HodMC.SS.getStress(block);
 //                block.getWorld().spawnParticle(org.bukkit.Particle.NOTE, block.getLocation(), 0, 6 / 24.0, 0, 0, 1);
                 if (stress == 1f) {
                     block = block.getRelative(BlockFace.DOWN);
@@ -154,7 +153,7 @@ public class Zergling extends EntityZombie {
                 List<Block> sides = Arrays.asList(block.getRelative(BlockFace.NORTH), block.getRelative(BlockFace.EAST), block.getRelative(BlockFace.SOUTH), block.getRelative(BlockFace.WEST));
                 boolean flag = false;
                 for (Block side : sides) {
-                    if (UpdateStressAction.getStress(side.getLocation()) < stress) {
+                    if (HodMC.SS.getStress(side) < stress) {
                         block = side;
                         flag = true;
                         break;

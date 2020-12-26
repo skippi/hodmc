@@ -1,6 +1,7 @@
 package io.github.skippi.hodmc;
 
 import io.github.skippi.hodmc.gravity.Scheduler;
+import io.github.skippi.hodmc.gravity.StressSystem;
 import io.github.skippi.hodmc.gravity.UpdateNeighborStressAction;
 import io.github.skippi.hodmc.gravity.UpdateStressAction;
 import net.minecraft.server.v1_16_R3.EntityLiving;
@@ -39,6 +40,7 @@ public class HodMC extends JavaPlugin implements Listener {
     private Map<UUID, Integer> oreCooldowns = new HashMap<>();
     private Scheduler physicsScheduler = new Scheduler();
     public static final BlockHealthSystem BHS = new BlockHealthSystem();
+    public static final StressSystem SS = new StressSystem();
 
     private static class OreRenewInfo {
         public int time = 0;
@@ -92,8 +94,9 @@ public class HodMC extends JavaPlugin implements Listener {
 
     @EventHandler
     private void gravityPhysics(BlockPhysicsEvent event) {
-        physicsScheduler.schedule(new UpdateNeighborStressAction(event.getBlock()));
-        physicsScheduler.schedule(new UpdateStressAction(event.getBlock().getLocation()));
+        Block block = event.getBlock();
+        physicsScheduler.schedule(new UpdateNeighborStressAction(block));
+        physicsScheduler.schedule(new UpdateStressAction(block));
     }
 
     private Villager makeShopkeeper(Location loc) {

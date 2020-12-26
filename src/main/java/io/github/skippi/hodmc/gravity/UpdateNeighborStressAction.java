@@ -28,7 +28,7 @@ public class UpdateNeighborStressAction implements Action {
         for (BlockFace face : facesToCheck) {
             Block neighbor = block.getRelative(face);
             if (!neighbor.getWorld().getWorldBorder().isInside(neighbor.getLocation())) continue;
-            scheduler.schedule(new UpdateStressAction(neighbor.getLocation()));
+            scheduler.schedule(new UpdateStressAction(neighbor));
         }
     }
 }

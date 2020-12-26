@@ -4,6 +4,7 @@ import io.github.skippi.hodmc.gravity.Scheduler;
 import io.github.skippi.hodmc.gravity.StressSystem;
 import io.github.skippi.hodmc.gravity.UpdateNeighborStressAction;
 import io.github.skippi.hodmc.gravity.UpdateStressAction;
+import io.github.skippi.hodmc.system.BlockPickupSystem;
 import io.github.skippi.hodmc.system.BlockRenewSystem;
 import net.minecraft.server.v1_16_R3.EntityLiving;
 import org.apache.commons.lang.math.RandomUtils;
@@ -37,11 +38,11 @@ public class HodMC extends JavaPlugin implements Listener {
     private int roundIndex = 0;
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();
-    private Map<UUID, Integer> oreCooldowns = new HashMap<>();
     private Scheduler physicsScheduler = new Scheduler();
     public static final BlockHealthSystem BHS = new BlockHealthSystem();
-    public static final StressSystem SS = new StressSystem();
+    public static final BlockPickupSystem BPS = new BlockPickupSystem();
     public static final BlockRenewSystem BRS = new BlockRenewSystem();
+    public static final StressSystem SS = new StressSystem();
 
     @EventHandler
     private void resetBlockDamage(BlockBreakEvent event) {
@@ -74,9 +75,9 @@ public class HodMC extends JavaPlugin implements Listener {
         }
         makeShopkeeper(world.getSpawnLocation());
         BukkitScheduler scheduler = getServer().getScheduler();
-        scheduler.scheduleSyncRepeatingTask(this, () -> ticker.run(), 0, 1);
-        scheduler.scheduleSyncRepeatingTask(this, this::tickOreRenew, 0, 1);
         scheduler.scheduleSyncRepeatingTask(this, () -> physicsScheduler.tick(), 0, 1);
+        scheduler.scheduleSyncRepeatingTask(this, () -> ticker.run(), 0, 1);
+        scheduler.scheduleSyncRepeatingTask(this, BPS::tick, 0, 1);
         scheduler.scheduleSyncRepeatingTask(this, BRS::tick, 0, 1);
         PluginManager pluginManager = getServer().getPluginManager();
         pluginManager.registerEvents(this, this);
@@ -200,20 +201,11 @@ public class HodMC extends JavaPlugin implements Listener {
         if (event.getHand() != EquipmentSlot.HAND) return;
         if (!MaterialUtil.isPickaxe(event.getPlayer().getInventory().getItemInMainHand().getType()))
             return;
-        oreCooldowns.putIfAbsent(event.getPlayer().getUniqueId(), 0);
-        if (oreCooldowns.get(event.getPlayer().getUniqueId()) > 0) return;
         Block block = event.getClickedBlock();
-        if (MaterialUtil.isOre(block.getType())) {
-            block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(block.getType()));
-            block.setType(Material.AIR);
-            event.getPlayer().swingMainHand();
-            oreCooldowns.put(event.getPlayer().getUniqueId(), 8);
-        }
-    }
-
-    private void tickOreRenew() {
-        for (Map.Entry<UUID, Integer> entry : oreCooldowns.entrySet()) {
-            entry.setValue(Math.max(0, entry.getValue() - 1));
+        if (!MaterialUtil.isOre(block.getType())) return;
+        Player player = event.getPlayer();
+        if (BPS.pickup(block, player)) {
+            player.swingMainHand();
         }
     }
 

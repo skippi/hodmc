@@ -4,6 +4,7 @@ import io.github.skippi.hodmc.gravity.Scheduler;
 import io.github.skippi.hodmc.gravity.StressSystem;
 import io.github.skippi.hodmc.gravity.UpdateNeighborStressAction;
 import io.github.skippi.hodmc.gravity.UpdateStressAction;
+import io.github.skippi.hodmc.system.BlockHealthSystem;
 import io.github.skippi.hodmc.system.BlockPickupSystem;
 import io.github.skippi.hodmc.system.BlockRenewSystem;
 import net.minecraft.server.v1_16_R3.EntityLiving;

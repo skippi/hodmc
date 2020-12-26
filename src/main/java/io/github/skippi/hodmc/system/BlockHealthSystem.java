@@ -1,4 +1,4 @@
-package io.github.skippi.hodmc;
+package io.github.skippi.hodmc.system;
 
 import net.minecraft.server.v1_16_R3.BlockPosition;
 import net.minecraft.server.v1_16_R3.PacketPlayOutBlockBreakAnimation;

@@ -4,9 +4,7 @@ import io.github.skippi.hodmc.gravity.Scheduler;
 import io.github.skippi.hodmc.gravity.StressSystem;
 import io.github.skippi.hodmc.gravity.UpdateNeighborStressAction;
 import io.github.skippi.hodmc.gravity.UpdateStressAction;
-import io.github.skippi.hodmc.system.BlockHealthSystem;
-import io.github.skippi.hodmc.system.BlockPickupSystem;
-import io.github.skippi.hodmc.system.BlockRenewSystem;
+import io.github.skippi.hodmc.system.*;
 import net.minecraft.server.v1_16_R3.EntityLiving;
 import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.*;
@@ -40,9 +38,11 @@ public class HodMC extends JavaPlugin implements Listener {
     private long roundTime = 0;
     private List<EntityLiving> roundEntities = new ArrayList<>();
     private Scheduler physicsScheduler = new Scheduler();
+    public static final DeathSpectateSystem DSS = new DeathSpectateSystem();
     public static final BlockHealthSystem BHS = new BlockHealthSystem();
     public static final BlockPickupSystem BPS = new BlockPickupSystem();
     public static final BlockRenewSystem BRS = new BlockRenewSystem();
+    public static final EntityLootSystem ELS = new EntityLootSystem();
     public static final StressSystem SS = new StressSystem();
 
     @EventHandler
@@ -177,8 +177,7 @@ public class HodMC extends JavaPlugin implements Listener {
         if (world.getFullTime() != 18000) return;
         if ((player.getHealth() - event.getFinalDamage()) > 0) return;
         event.setCancelled(true);
-        player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
-        player.setGameMode(GameMode.SPECTATOR);
+        DSS.trigger(player);
     }
 
     @EventHandler
@@ -288,11 +287,7 @@ public class HodMC extends JavaPlugin implements Listener {
             world.setFullTime(world.getFullTime() + 200);
             return;
         }
-        for (Player player : world.getPlayers()) {
-            if (player.getGameMode() == GameMode.SPECTATOR) {
-                player.setGameMode(GameMode.SURVIVAL);
-            }
-        }
+        world.getPlayers().forEach(DSS::restore);
         world.setFullTime(0);
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
         ticker = this::tickDay;

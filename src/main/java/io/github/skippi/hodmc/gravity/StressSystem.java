@@ -1,5 +1,6 @@
 package io.github.skippi.hodmc.gravity;
 
+import io.github.skippi.hodmc.BlockUtil;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -44,11 +45,9 @@ public class StressSystem {
         if (!isStressAware(block)) return 0f;
         Block below = block.getRelative(BlockFace.DOWN);
         float result = getStress(below);
-        BlockFace[] sideFaces = { BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH };
-        for (BlockFace face : sideFaces) {
-            Block sideBlock = block.getRelative(face);
-            if (!isBaseable(sideBlock)) continue;
-            result = Math.min(result, getStress(sideBlock) + getStressWeight(sideBlock.getType()));
+        for (Block side : BlockUtil.getAdjacentBlocks(block)) {
+            if (!isBaseable(side)) continue;
+            result = Math.min(result, getStress(side) + getStressWeight(side.getType()));
         }
         return result;
     }

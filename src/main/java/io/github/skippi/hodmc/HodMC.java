@@ -340,6 +340,17 @@ public class HodMC extends JavaPlugin implements Listener {
         return entity;
     }
 
+    @EventHandler
+    private void noFallDamage(EntityDamageEvent event) {
+        EntityDamageEvent.DamageCause cause = event.getCause();
+        if (cause == EntityDamageEvent.DamageCause.FALL) {
+            event.setCancelled(true);
+        }
+        if (Arrays.asList(EntityDamageEvent.DamageCause.FALL, EntityDamageEvent.DamageCause.FALLING_BLOCK, EntityDamageEvent.DamageCause.SUFFOCATION).contains(event.getCause())) {
+            event.setDamage(event.getFinalDamage() / 6);
+        }
+    }
+
     private void tickNight() {
         World world = getServer().getWorld("world");
         Scoreboard board = makeNightScoreboard();

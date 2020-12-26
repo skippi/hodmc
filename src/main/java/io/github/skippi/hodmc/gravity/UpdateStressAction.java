@@ -59,7 +59,7 @@ public class UpdateStressAction implements Action {
         return Math.max(Math.min(value, max), min);
     }
 
-    private float getStress(Location loc) {
+    public static float getStress(Location loc) {
         if (isStressAware(loc)) {
             return stressMap.getOrDefault(loc, 0f);
         } else if (isPermanentlyStable(loc)) {
@@ -79,11 +79,11 @@ public class UpdateStressAction implements Action {
         return (!block.isEmpty() && !block.isLiquid() && mat != Material.GRASS);
     }
 
-    private boolean isStressAware(Location loc) {
+    private static boolean isStressAware(Location loc) {
         return !loc.getBlock().isEmpty() && !isPermanentlyStable(loc) && loc.getWorld().getWorldBorder().isInside(loc);
     }
 
-    private boolean isPermanentlyStable(Location loc) {
+    private static boolean isPermanentlyStable(Location loc) {
         Block block = loc.getBlock();
         Material mat = block.getType();
         return mat == Material.BEDROCK || block.isLiquid();

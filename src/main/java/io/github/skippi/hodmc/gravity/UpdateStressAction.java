@@ -34,7 +34,7 @@ public class UpdateStressAction implements Action {
         }
         if (getStress(loc) != newStress) {
             setStress(loc, newStress);
-            scheduler.schedule(new UpdateNeighborStressAction(loc));
+            scheduler.schedule(new UpdateNeighborStressAction(loc.getBlock()));
         }
     }
 

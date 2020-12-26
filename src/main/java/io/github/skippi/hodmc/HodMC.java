@@ -92,7 +92,7 @@ public class HodMC extends JavaPlugin implements Listener {
 
     @EventHandler
     private void gravityPhysics(BlockPhysicsEvent event) {
-        physicsScheduler.schedule(new UpdateNeighborStressAction(event.getBlock().getLocation()));
+        physicsScheduler.schedule(new UpdateNeighborStressAction(event.getBlock()));
         physicsScheduler.schedule(new UpdateStressAction(event.getBlock().getLocation()));
     }
 

@@ -1,12 +1,14 @@
 package io.github.skippi.hodmc.gravity;
 
 import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 
 public class UpdateNeighborStressAction implements Action {
-    private Location loc;
+    private Block block;
 
-    public UpdateNeighborStressAction(Location loc) {
-        this.loc = loc;
+    public UpdateNeighborStressAction(Block block) {
+        this.block = block;
     }
 
     @Override
@@ -16,16 +18,17 @@ public class UpdateNeighborStressAction implements Action {
 
     @Override
     public void call(Scheduler scheduler) {
-        Location[] neighborOrder = {
-                loc.clone().add(-1, 0, 0),
-                loc.clone().add(1, 0, 0),
-                loc.clone().add(0, 0, 1),
-                loc.clone().add(0, 0, -1),
-                loc.clone().add(0, 1, 0)
+        BlockFace[] facesToCheck = {
+            BlockFace.WEST,
+            BlockFace.EAST,
+            BlockFace.NORTH,
+            BlockFace.SOUTH,
+            BlockFace.UP
         };
-        for (Location neighbor : neighborOrder) {
-            if (!neighbor.getWorld().getWorldBorder().isInside(neighbor)) continue;
-            scheduler.schedule(new UpdateStressAction(neighbor));
+        for (BlockFace face : facesToCheck) {
+            Block neighbor = block.getRelative(face);
+            if (!neighbor.getWorld().getWorldBorder().isInside(neighbor.getLocation())) continue;
+            scheduler.schedule(new UpdateStressAction(neighbor.getLocation()));
         }
     }
 }

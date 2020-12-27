@@ -8,7 +8,6 @@ import io.github.skippi.hodmc.system.*;
 import net.minecraft.server.v1_16_R3.EntityLiving;
 import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.*;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
 import org.bukkit.enchantments.Enchantment;
@@ -42,7 +41,6 @@ public class HodMC extends JavaPlugin implements Listener {
     public static final BlockHealthSystem BHS = new BlockHealthSystem();
     public static final BlockPickupSystem BPS = new BlockPickupSystem();
     public static final BlockRenewSystem BRS = new BlockRenewSystem();
-    public static final EntityLootSystem ELS = new EntityLootSystem();
     public static final StressSystem SS = new StressSystem();
 
     @EventHandler

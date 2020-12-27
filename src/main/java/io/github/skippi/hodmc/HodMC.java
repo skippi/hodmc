@@ -32,10 +32,8 @@ import java.util.*;
 
 public class HodMC extends JavaPlugin implements Listener {
     private Runnable ticker = this::tickDay;
-    private List<Wave> waves = Arrays.asList(Wave.builder().withUnitGroup("zergling", 50).build());
     private int roundIndex = 0;
     private long roundTime = 0;
-    private List<EntityLiving> roundEntities = new ArrayList<>();
     private Scheduler physicsScheduler = new Scheduler();
     public static final DeathSpectateSystem DSS = new DeathSpectateSystem();
     public static final BlockHealthSystem BHS = new BlockHealthSystem();
@@ -233,15 +231,11 @@ public class HodMC extends JavaPlugin implements Listener {
                 .withSeparator()
                 .withLine("Phase: " + ChatColor.AQUA + "Night")
                 .withLine("Time: " + ChatColor.AQUA + format.format(new Date(roundTime / 20 * 1000)))
-                .withLine("Remaining: " + ChatColor.AQUA + roundEntities.stream().filter(EntityLiving::isAlive).count())
                 .build();
         return board.toScoreboard();
     }
 
     private void tickDay() {
-        if (isVictory()) {
-            return;
-        }
         Scoreboard board = makeDayScoreboard();
         Bukkit.getOnlinePlayers().forEach(p -> p.setScoreboard(board));
         World world = getServer().getWorld("world");
@@ -267,15 +261,9 @@ public class HodMC extends JavaPlugin implements Listener {
             world.setFullTime(world.getFullTime() + 100);
             return;
         }
-        roundTime = getCurrentWave().getTimeLimit();
+        roundTime = 1800;
         world.setFullTime(18000);
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-        roundEntities.clear();
-        for (String id : getCurrentWave().getUnits()) {
-            int x = RandomUtils.nextBoolean() ? -85 : 85;
-            int z = (int)(RandomUtils.nextFloat() * 170) - 85;
-            roundEntities.add(genUnit(id, world.getHighestBlockAt(x, z).getLocation().add(0, 1, 0)));
-        }
         ticker = this::tickNight;
     }
 
@@ -288,6 +276,7 @@ public class HodMC extends JavaPlugin implements Listener {
         world.getPlayers().forEach(DSS::restore);
         world.setFullTime(0);
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+        world.getLivingEntities().stream().filter(e -> !(e instanceof Player)).forEach(Entity::remove);
         ticker = this::tickDay;
     }
 
@@ -321,20 +310,19 @@ public class HodMC extends JavaPlugin implements Listener {
         World world = getServer().getWorld("world");
         Scoreboard board = makeNightScoreboard();
         Bukkit.getOnlinePlayers().forEach(p -> p.setScoreboard(board));
-        if (roundEntities.stream().allMatch(e -> !e.isAlive())) {
+        if (world.getLivingEntities().size() < 200) {
+            double chance = RandomUtils.nextDouble();
+            if (chance < 1 / 20.0) {
+                int x = RandomUtils.nextBoolean() ? -85 : 85;
+                int z = (int)(RandomUtils.nextFloat() * 170) - 85;
+                genUnit("zergling", world.getHighestBlockAt(x, z).getLocation().add(0, 1, 0));
+            }
+        }
+        if (roundTime <= 0) {
             roundIndex++;
             roundTime = 0;
-            roundEntities.clear();
             ticker = this::tickNightDay;
         }
         roundTime = Math.max(0, roundTime - 1);
-    }
-
-    private Wave getCurrentWave() {
-       return waves.get(roundIndex);
-    }
-
-    private boolean isVictory() {
-        return roundIndex >= waves.size();
     }
 }
